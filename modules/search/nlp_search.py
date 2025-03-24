@@ -238,7 +238,6 @@ class NLPSearch:
             print(f"Error retrieving products: {e}")
             return pd.DataFrame()
 
-
     def _apply_attribute_filters(self, results, attributes):
         """
         Apply attribute-based filtering to search results
@@ -249,51 +248,90 @@ class NLPSearch:
             Initial search results
         attributes : dict
             Extracted query attributes
-            
+                
         Returns:
         --------
         pandas DataFrame
             Filtered results
         """
+        if results.empty:
+            return results
+
         filtered = results.copy()
-        if attributes['season']:
+        
+        # Check if season attribute exists and if the Tags column exists
+        if attributes['season'] and 'Tags' in filtered.columns:
             season_terms = [attributes['season'], attributes['season'].capitalize()]
-            mask = (filtered['Tags'].str.contains('|'.join(season_terms), case=False, na=False) |
-                    filtered['Category'].str.contains('|'.join(season_terms), case=False, na=False) |
-                    filtered['Description'].str.contains('|'.join(season_terms), case=False, na=False))
+            mask = (filtered['Tags'].str.contains('|'.join(season_terms), case=False, na=False))
+            
+            # Also check Category and Description columns if they exist
+            if 'Category' in filtered.columns:
+                mask = mask | (filtered['Category'].str.contains('|'.join(season_terms), case=False, na=False))
+            
+            if 'Description' in filtered.columns:
+                mask = mask | (filtered['Description'].str.contains('|'.join(season_terms), case=False, na=False))
+                
             if mask.any():
                 filtered = filtered[mask]
         
+        # Check if color attribute exists and necessary columns exist
         if attributes['color']:
             color_terms = [attributes['color'], attributes['color'].capitalize()]
-            mask = (filtered['Tags'].str.contains('|'.join(color_terms), case=False, na=False) |
-                    filtered['Description'].str.contains('|'.join(color_terms), case=False, na=False) |
-                    filtered['Category'].str.contains('|'.join(color_terms), case=False, na=False))
+            
+            # Initialize mask with False values
+            mask = pd.Series([False] * len(filtered))
+            
+            # Check Tags if it exists
+            if 'Tags' in filtered.columns:
+                mask = mask | (filtered['Tags'].str.contains('|'.join(color_terms), case=False, na=False))
+            
+            # Check Description if it exists
+            if 'Description' in filtered.columns:
+                mask = mask | (filtered['Description'].str.contains('|'.join(color_terms), case=False, na=False))
+                
+            # Check Category if it exists
+            if 'Category' in filtered.columns:
+                mask = mask | (filtered['Category'].str.contains('|'.join(color_terms), case=False, na=False))
+                
             if mask.any():
                 filtered = filtered[mask]
         
+        # Check if brand attribute exists and Brand column exists
         if attributes['brand']:
             brand_terms = [attributes['brand'], attributes['brand'].lower()]
-            mask = (filtered['Brand'].str.contains('|'.join(brand_terms), case=False, na=False))
-            if mask.any():
-                filtered = filtered[mask]
-        
-        if attributes['gender']:
-            gender_terms = [attributes['gender'], attributes['gender'].lower()]
-            mask = (filtered['Tags'].str.contains('|'.join(gender_terms), case=False, na=False) |
-                    filtered['Category'].str.contains('|'.join(gender_terms), case=False, na=False))
-            if mask.any():
-                filtered = filtered[mask]
-        
-        if attributes['price_range']:
-            min_price, max_price = attributes['price_range']
-            # Assuming you have a 'Price' column or need to infer from other data
-            if 'Price' in filtered.columns:
-                mask = (filtered['Price'].between(min_price, max_price, inclusive='both'))
+            
+            if 'Brand' in filtered.columns:
+                mask = (filtered['Brand'].str.contains('|'.join(brand_terms), case=False, na=False))
                 if mask.any():
                     filtered = filtered[mask]
         
+        # Check if gender attribute exists and necessary columns exist
+        if attributes['gender']:
+            gender_terms = [attributes['gender'], attributes['gender'].lower()]
+            
+            # Initialize mask with False values
+            mask = pd.Series([False] * len(filtered))
+            
+            # Check Tags if it exists
+            if 'Tags' in filtered.columns:
+                mask = mask | (filtered['Tags'].str.contains('|'.join(gender_terms), case=False, na=False))
+            
+            # Check Category if it exists
+            if 'Category' in filtered.columns:
+                mask = mask | (filtered['Category'].str.contains('|'.join(gender_terms), case=False, na=False))
+                
+            if mask.any():
+                filtered = filtered[mask]
+        
+        # Check if price_range attribute exists and Price column exists
+        if attributes['price_range'] and 'Price' in filtered.columns:
+            min_price, max_price = attributes['price_range']
+            mask = (filtered['Price'].between(min_price, max_price, inclusive='both'))
+            if mask.any():
+                filtered = filtered[mask]
+        
         return filtered
+
 
     def enhanced_search(self, query_text, user_id=None, top_n=10):
         """

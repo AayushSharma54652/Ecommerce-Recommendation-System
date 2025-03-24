@@ -29,8 +29,8 @@ app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 # Load files
-trending_products = load_product_data('models/clean_data.json')
-train_data = load_product_data('models/clean_data.csv')
+trending_products = load_product_data('models/trending_products.json')
+train_data = load_product_data('models/clean_data.json')
 
 # Database configuration
 app.secret_key = "alskdjfwoeieiurlskdjfslkdjf"
