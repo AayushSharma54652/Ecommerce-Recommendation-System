@@ -100,6 +100,27 @@ def format_product_response(products_df):
     return products_df.to_dict(orient='records')
 
 # API Routes
+
+@app.route('/')
+def api_home():
+    """API home page with basic information and links"""
+    return jsonify({
+        "service": "E-commerce Recommendation API",
+        "version": "1.0.0",
+        "description": "AI-powered recommendation and search API for e-commerce platforms",
+        "documentation": "/api/docs",
+        "status": "online",
+        "endpoints": {
+            "info": "/api/info",
+            "recommendations": "/api/recommendations/content, /api/recommendations/user",
+            "search": "/api/search/nlp, /api/search/image, /api/search/multimodal, /api/search/voice",
+            "ai_assistant": "/api/ai_assistant/chat, /api/ai_assistant/suggestions",
+            "trending": "/api/trending",
+            "autocomplete": "/api/autocomplete"
+        },
+        "message": "Please see the documentation at /api/docs for complete API information"
+    })
+
 @app.route('/api/info', methods=['GET'])
 def api_info():
     """Get information about the recommendation API"""
